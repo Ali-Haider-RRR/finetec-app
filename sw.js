@@ -1,5 +1,5 @@
 // Service worker: caches the whole app so it works with no internet.
-const CACHE = 'finetec-v3';
+const CACHE = 'finetec-v4';
 const FILES = [
   './', './index.html', './manifest.webmanifest',
   './css/app.css',

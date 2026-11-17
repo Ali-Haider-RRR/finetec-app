@@ -255,7 +255,7 @@ function drawBody(ctx, inv, biz, sigImg, W) {
 
   // Signature block
   const sy = Math.max(ty + 38, y1 + 150);
-  text(ctx, 'For: ' + String(biz.name || 'FINE TEC').toUpperCase(), rx + colR / 2, sy, { size: 14, align: 'center' });
+  text(ctx, 'For: ' + String((inv.forName != null ? inv.forName : biz.name) || 'FINE TEC').toUpperCase(), rx + colR / 2, sy, { size: 14, align: 'center' });
   const sigTop = sy + 22, sigH = 78;
   if (sigImg) drawContain(ctx, sigImg, rx + colR / 2 - 100, sigTop, 200, sigH);
   const lineY = sigTop + sigH + 6;

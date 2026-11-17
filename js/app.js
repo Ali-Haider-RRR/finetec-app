@@ -209,6 +209,7 @@ async function editScreen(id, copyId) {
   };
   if (!existing) { if (copyId) { d.number = nextNumber(); d.date = isoToDmy(todayIso()); d.received = ''; delete d.id; } }
   d.design = d.design || settings.design;
+  if (d.forName == null) d.forName = (existing && existing.biz && existing.biz.name) || settings.name || '';
   d.items = (d.items && d.items.length ? d.items : [{ name: '', qty: '1', rate: '' }]).map(i => ({ name: i.name || '', qty: String(i.qty ?? '1'), rate: String(i.rate ?? '') }));
 
   // --- design picker
@@ -299,6 +300,7 @@ async function editScreen(id, copyId) {
     h('div', { class: 'sec' }, '6. Terms'),
     h('textarea', { oninput: e => (d.terms = e.target.value) }, d.terms || ''),
     h('div', { class: 'sec' }, '7. Signature'),
+    h('div', { class: 'card' }, h('label', { class: 'f', style: 'margin-top:0' }, 'Bill is for (printed as "For: …" above the signature)'), h('input', { value: d.forName, placeholder: 'e.g. FINE TEC or another name', oninput: e => (d.forName = e.target.value) })),
     sigBox,
     h('div', { class: 'btns', style: 'grid-template-columns:1fr 1fr 1fr' },
       h('button', { class: 'btn ghost', type: 'button', onclick: async () => setSig(await openSignaturePad()) }, '✍ Draw'),
@@ -319,7 +321,7 @@ async function editScreen(id, copyId) {
     const inv = {
       id: existing ? existing.id : uid(), createdAt: existing ? existing.createdAt : now, updatedAt: now,
       number: String(d.number).trim(), date: d.date, customerName: d.customerName.trim(), customerPhone: d.customerPhone.trim(), customerAddress: d.customerAddress.trim(),
-      items: cleanItems, discount: num(d.discount), received: num(d.received), terms: d.terms, design: d.design,
+      items: cleanItems, discount: num(d.discount), received: num(d.received), terms: d.terms, forName: d.forName.trim(), design: d.design,
       signature: d.signature, showSignature: !!d.signature && d.showSignature !== false,
       biz: existing && existing.biz ? existing.biz : { name: settings.name, address: settings.address, phone: settings.phone, email: settings.email },
     };
