@@ -402,6 +402,7 @@ function settingsScreen() {
     h('button', { class: 'btn ghost block', onclick: async () => { const ok = navigator.storage && navigator.storage.persist ? await navigator.storage.persist() : false; toast(ok ? 'Your data is now protected' : 'Your browser did not allow it - install the app first'); settingsScreen(); } }, '🔒 Protect my data'),
     h('div', { style: 'margin:8px 2px' }, store),
     h('div', { class: 'sec' }, 'Danger zone'),
+    h('button', { class: 'btn ghost block', style: 'margin-top:6px', onclick: async () => { try { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.update())); const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } catch (e) {} toast('Updating…'); setTimeout(() => location.reload(), 600); } }, '⟳ Check for updates'),
     h('button', { class: 'btn danger block', onclick: async () => { if (confirm('Delete ALL invoices and customers from this device? Make a backup first!') && confirm('Really delete everything?')) { await db.clear('invoices'); await db.clear('customers'); await loadAll(); toast('Everything deleted'); location.hash = '#/'; } } }, 'Delete all data'),
     h('p', { class: 'muted', style: 'text-align:center;margin:22px 0' }, 'Fine Tec Invoices · works offline')));
 }
@@ -442,7 +443,10 @@ async function start() {
   window.addEventListener('hashchange', route);
   await route();
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(() => {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) location.reload(); });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+      reg.update().catch(() => {});
       if (!localStorage.getItem('ft-offline-ready')) { localStorage.setItem('ft-offline-ready', '1'); navigator.serviceWorker.ready.then(() => toast('Ready to work offline ✔', 3500)); }
     }).catch(() => {});
   }

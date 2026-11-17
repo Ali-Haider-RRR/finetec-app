@@ -1,5 +1,5 @@
 // Service worker: caches the whole app so it works with no internet.
-const CACHE = 'finetec-v4';
+const CACHE = 'finetec-v5';
 const FILES = [
   './', './index.html', './manifest.webmanifest',
   './css/app.css',
@@ -14,7 +14,7 @@ const FILES = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(
@@ -22,18 +22,18 @@ self.addEventListener('activate', e => {
       .then(() => self.clients.claim())
   );
 });
+// Network-first: online = always the newest version; offline = the saved copy.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then(hit => {
-      if (hit) return hit;
-      return fetch(e.request).then(res => {
-        if (res.ok && new URL(e.request.url).origin === location.origin) {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, copy));
-        }
-        return res;
-      }).catch(() => (e.request.mode === 'navigate' ? caches.match('./index.html') : undefined));
-    })
+    fetch(e.request, { cache: 'no-cache' }).then(res => {
+      if (res.ok && new URL(e.request.url).origin === location.origin) {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copy));
+      }
+      return res;
+    }).catch(() =>
+      caches.match(e.request, { ignoreSearch: true }).then(hit => hit || (e.request.mode === 'navigate' ? caches.match('./index.html') : undefined))
+    )
   );
 });
