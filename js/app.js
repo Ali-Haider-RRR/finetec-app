@@ -285,7 +285,7 @@ async function editScreen(id, copyId) {
     h('div', { class: 'card' }, h('label', { class: 'f' }, 'Name'), nameIn, h('label', { class: 'f' }, 'Phone'), phoneIn, h('label', { class: 'f' }, 'Address'), addrIn),
     h('div', { class: 'sec' }, '3. Invoice details'),
     h('div', { class: 'card grid2' },
-      h('div', {}, h('label', { class: 'f', style: 'margin-top:0' }, 'Invoice No.'), h('input', { value: d.number, oninput: e => (d.number = e.target.value) })),
+      h('div', {}, h('label', { class: 'f', style: 'margin-top:0' }, 'Invoice No. (auto)'), h('input', { value: d.number, readonly: true, 'aria-label': 'Invoice number (automatic)', style: 'background:#eef1f7;font-weight:700' })),
       h('div', {}, h('label', { class: 'f', style: 'margin-top:0' }, 'Date'), h('input', { type: 'date', value: dmyToIso(d.date), onchange: e => (d.date = isoToDmy(e.target.value)) }))),
     h('div', { class: 'sec' }, '4. Items'),
     itemsBox,
@@ -314,9 +314,7 @@ async function editScreen(id, copyId) {
     const t = totals(d);
     const cleanItems = d.items.filter(i => i.name.trim() || num(i.rate) > 0).map(i => ({ name: i.name.trim(), qty: num(i.qty || 1) || 1, rate: num(i.rate) }));
     if (!cleanItems.length || t.total <= 0) { toast('Add at least one item with a rate'); return; }
-    if (!String(d.number).trim()) { toast('Please enter an invoice number'); return; }
-    const clash = invoices.find(i => String(i.number).trim() === String(d.number).trim() && (!existing || i.id !== existing.id));
-    if (clash && !confirm(`Invoice number ${d.number} is already used for ${clash.customerName || 'another invoice'}. Save anyway?`)) return;
+    if (!existing) d.number = nextNumber(); // always a fresh, never-used number
     const now = Date.now();
     const inv = {
       id: existing ? existing.id : uid(), createdAt: existing ? existing.createdAt : now, updatedAt: now,
@@ -384,7 +382,6 @@ function settingsScreen() {
     h('div', { class: 'card' }, field('Business name', 'name'), field('Address (one line per row)', 'address', 'text', 3), field('Phone', 'phone', 'tel'), field('Email', 'email', 'email')),
     h('div', { class: 'sec' }, 'Defaults'),
     h('div', { class: 'card' },
-      field('Next invoice number', 'nextNumber', 'number'),
       field('Default terms', 'terms', 'text', 3),
       h('label', { class: 'f' }, 'Default design'),
       h('select', { onchange: e => (s.design = e.target.value) }, DESIGNS.map(ds => h('option', { value: ds.id, selected: s.design === ds.id }, ds.name + ' - ' + ds.note)))),
@@ -394,7 +391,7 @@ function settingsScreen() {
       h('button', { class: 'btn ghost', onclick: async () => { const d = await openSignaturePad(); if (d) { s.signature = d; drawSig(); } } }, '✍ Draw'),
       h('button', { class: 'btn ghost', onclick: () => fileIn.click() }, '📷 Upload'),
       h('button', { class: 'btn ghost', onclick: () => { s.signature = ''; drawSig(); } }, 'Remove')), fileIn,
-    h('button', { class: 'btn red block', style: 'margin-top:6px', onclick: async () => { Object.assign(settings, s, { nextNumber: num(s.nextNumber) || 1 }); await saveSettings(settings); toast('Settings saved'); } }, 'Save settings'),
+    h('button', { class: 'btn red block', style: 'margin-top:6px', onclick: async () => { Object.assign(settings, s, { nextNumber: settings.nextNumber }); await saveSettings(settings); toast('Settings saved'); } }, 'Save settings'),
     h('div', { class: 'sec' }, 'Backup (important)'),
     h('div', { class: 'note' }, 'Your invoices live only on this device. Make a backup file now and then and keep it safe (for example in WhatsApp “Saved messages” or Google Drive).'),
     h('div', { class: 'btns' },
