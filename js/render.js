@@ -12,6 +12,7 @@ export const DESIGNS = [
   { id: 'pool-light', name: 'Pool Light', note: 'Very light pool photo', bg: 'assets/bg-pool-light.jpg', panel: 0.3, products: 'soft', top: 270, limit: 890 },
   { id: 'pool-mid', name: 'Pool', note: 'Pool photo + products', bg: 'assets/bg-pool-mid.jpg', panel: 0.66, products: 'soft', top: 270, limit: 890 },
   { id: 'bold', name: 'Bold Products', note: 'Clear product rows', bg: null, products: 'bold', top: 300, limit: 886 },
+  { id: 'table', name: 'Table Style', note: 'Boxed table, orange', bg: null, products: null, custom: true },
 ];
 
 const PRODUCTS = [
@@ -284,6 +285,115 @@ function drawBody(ctx, inv, biz, sigImg, W) {
   return Math.max(leftBottom, rightBottom);
 }
 
+
+// ---------- "Table Style" design (boxed grid table, orange accents) ----------
+const ORANGE = '#f2a02a', INK = '#1d1d1f', GRID = '#2b2b2e';
+function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg) {
+  const t = totals(inv);
+  const X = 44, W = PW - 88;
+  // soft warm paper tint
+  const g = ctx.createLinearGradient(0, 0, 0, PH);
+  g.addColorStop(0, '#fffdf8'); g.addColorStop(1, '#fff6e6');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, PW, PH);
+  // header: logo left, INVOICE right
+  drawContain(ctx, logo, X, 34, 230, 68);
+  text(ctx, 'INVOICE', PW - X, 40, { size: 52, bold: true, color: INK, align: 'right' });
+  hline(ctx, X, PW - X, 122, ORANGE, 3);
+
+  // Bill To / meta / From
+  const colW = 230;
+  let y = 142;
+  text(ctx, 'Bill To:', X, y, { size: 20, bold: true, color: INK });
+  text(ctx, 'From:', PW - X, y, { size: 20, bold: true, color: INK, align: 'right' });
+  y += 34;
+  const cust = [inv.customerName, inv.customerPhone, ...wrap(ctx, inv.customerAddress, colW, 14, false)].filter(Boolean);
+  cust.slice(0, 5).forEach((ln, i) => text(ctx, ln, X, y + i * 20, { size: 14, bold: i === 0, color: INK }));
+  const from = [biz.name, biz.phone, biz.email, ...wrap(ctx, biz.address, colW, 13, false)].filter(Boolean);
+  from.slice(0, 6).forEach((ln, i) => text(ctx, ln, PW - X, y + i * 19, { size: i === 0 ? 14 : 13, bold: i === 0, color: INK, align: 'right' }));
+  text(ctx, 'Date : ' + (inv.date || ''), PW / 2, y + 2, { size: 14, color: INK, align: 'center' });
+  text(ctx, 'Invoice No : ' + (inv.number || ''), PW / 2, y + 26, { size: 14, color: INK, align: 'center' });
+
+  // Table
+  const tt = 322;
+  const cols = [46, 318, 64, 118, W - 46 - 318 - 64 - 118];
+  const heads = ['Item', 'Description', 'Qty', 'Unit Price', 'Amount'];
+  const xs = [X]; cols.forEach(c => xs.push(xs[xs.length - 1] + c));
+  const headH = 28, footH = 30, subH = 24;
+  const bottom = 790;
+  const rowsArea = bottom - tt - headH - footH - subH * 2;
+  const items = (inv.items || []).filter(i => String(i.name || '').trim() || num(i.rate) > 0);
+  const nRows = Math.max(10, items.length);
+  const rh = Math.min(rowsArea / nRows, 40);
+  const fs = rh >= 30 ? 14 : Math.max(9, Math.floor(rh * 0.45));
+  const tableH = headH + rh * nRows + footH + subH * 2;
+  // header
+  ctx.fillStyle = ORANGE; ctx.fillRect(X, tt, W, headH);
+  heads.forEach((hd, i) => text(ctx, hd, xs[i] + cols[i] / 2, tt + 7, { size: 14, bold: true, color: INK, align: 'center' }));
+  // body background
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(X, tt + headH, W, rh * nRows);
+  for (let r = 0; r < nRows; r++) {
+    const ry = tt + headH + r * rh, it = items[r];
+    if (!it) continue;
+    const ty = ry + (rh - fs) / 2 - 1;
+    text(ctx, String(r + 1), xs[0] + cols[0] / 2, ty, { size: fs, color: INK, align: 'center' });
+    text(ctx, fitText(ctx, it.name, cols[1] - 16, fs, false), xs[1] + 8, ty, { size: fs, color: INK });
+    text(ctx, String(num(it.qty || 1)), xs[2] + cols[2] / 2, ty, { size: fs, color: INK, align: 'center' });
+    text(ctx, plain(num(it.rate)), xs[3] + cols[3] - 8, ty, { size: fs, color: INK, align: 'right' });
+    text(ctx, plain(num(it.qty || 1) * num(it.rate)), xs[4] + cols[4] - 8, ty, { size: fs, color: INK, align: 'right' });
+  }
+  // totals rows
+  const fy = tt + headH + rh * nRows;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(X, fy, W, footH + subH * 2);
+  ctx.fillStyle = ORANGE; ctx.fillRect(xs[4], fy, cols[4], footH);
+  text(ctx, t.discount > 0 ? 'Total (after discount ' + plain(t.discount) + ')' : 'Total', X + 10, fy + 7, { size: 15, bold: true, color: INK });
+  text(ctx, plain(t.total), xs[4] + cols[4] - 8, fy + 7, { size: 15, bold: true, color: INK, align: 'right' });
+  text(ctx, 'Received', xs[3] + cols[3] - 8, fy + footH + 5, { size: 13, color: INK, align: 'right' });
+  text(ctx, plain(t.received), xs[4] + cols[4] - 8, fy + footH + 5, { size: 13, color: INK, align: 'right' });
+  text(ctx, 'Balance', xs[3] + cols[3] - 8, fy + footH + subH + 5, { size: 13, bold: true, color: INK, align: 'right' });
+  text(ctx, plain(t.balance), xs[4] + cols[4] - 8, fy + footH + subH + 5, { size: 13, bold: true, color: INK, align: 'right' });
+  // grid lines
+  ctx.strokeStyle = GRID; ctx.lineWidth = 1.1;
+  ctx.strokeRect(X, tt, W, tableH);
+  for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(xs[i], tt); ctx.lineTo(xs[i], i === 4 || i === 3 ? tt + tableH : fy); ctx.stroke(); }
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(xs[3] + 1, fy + 1, cols[3] - 1, footH - 2); ctx.strokeStyle = GRID;
+  ctx.beginPath(); ctx.moveTo(X, fy); ctx.lineTo(PW - X, fy); ctx.stroke();
+  for (let r = 0; r <= nRows; r++) { const ly = tt + headH + r * rh; ctx.beginPath(); ctx.moveTo(X, ly); ctx.lineTo(PW - X, ly); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(xs[3], fy + footH); ctx.lineTo(PW - X, fy + footH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(xs[3], fy + footH + subH); ctx.lineTo(PW - X, fy + footH + subH); ctx.stroke();
+
+  // amount in words
+  const wy = tt + tableH + 12;
+  const words = wrap(ctx, 'Amount in words: ' + amountInWords(t.total), W, 13, false).slice(0, 2);
+  words.forEach((ln, i) => text(ctx, ln, X, wy + i * 18, { size: 13, color: INK }));
+
+  // bottom section
+  const by = 850;
+  text(ctx, 'THANK YOU!', X, by, { size: 24, bold: true, color: INK });
+  const info = [wrap(ctx, String(biz.address || '').replace(/\n/g, ' '), 270, 13, false)[0], biz.phone, biz.email];
+  const addrLines = wrap(ctx, String(biz.address || '').replace(/\n/g, ' '), 270, 13, false).slice(0, 2);
+  const contact = [...addrLines, biz.phone, biz.email].filter(Boolean);
+  let cy = by + 42;
+  contact.forEach(ln => {
+    ctx.fillStyle = ORANGE; ctx.beginPath(); ctx.arc(X + 6, cy + 8, 5, 0, Math.PI * 2); ctx.fill();
+    text(ctx, ln, X + 22, cy, { size: 13, color: INK });
+    cy += 26;
+  });
+  const nx = 400;
+  text(ctx, 'Note:', nx, by, { size: 22, bold: true, color: INK });
+  const notes = wrap(ctx, inv.terms, PW - X - nx, 13, false).slice(0, 2);
+  [0, 1].forEach(i => { hline(ctx, nx, PW - X, by + 56 + i * 26, INK, 1.2); if (notes[i]) text(ctx, notes[i], nx, by + 56 + i * 26 - 19, { size: 13, color: INK }); });
+  // signature
+  const sx = nx + (PW - X - nx) / 2;
+  text(ctx, 'For: ' + String((inv.forName != null ? inv.forName : biz.name) || 'FINE TEC').toUpperCase(), sx, by + 100, { size: 13, align: 'center', color: INK });
+  if (sigImg) drawContain(ctx, sigImg, sx - 95, by + 120, 190, 62);
+  hline(ctx, sx - 95, sx + 95, by + 184, INK, 1.1);
+  text(ctx, 'Authorized Signatory', sx, by + 190, { size: 13, color: INK, align: 'center' });
+
+  // bottom bar
+  ctx.fillStyle = ORANGE; ctx.fillRect(0, PH - 26, PW, 16);
+  ctx.fillStyle = INK; ctx.fillRect(0, PH - 10, PW, 10);
+}
+
 // ---------- public API ----------
 const sigCache = new Map();
 async function sigImage(src) {
@@ -305,6 +415,7 @@ export async function renderInvoice(canvas, inv, biz, designId, scale = 2) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, PW, PH);
+  if (design.custom) { drawTableInvoice(ctx, inv, biz, logo, mark, sig); return canvas; }
   if (bg) ctx.drawImage(bg, 0, 0, PW, PH);
   if (design.panel) {
     // soft white panel behind the writing area so text stays easy to read over the photo
