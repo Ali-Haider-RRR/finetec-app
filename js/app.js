@@ -8,6 +8,7 @@ const DEFAULTS = {
   address: 'Office 4-5 Nasrullah Plaza, Korey Stop,\nWalton Road, Cantt. Lahore.',
   phone: '+92 3269915915',
   email: 'finetecoffical@gmail.com',
+  ntn: '',
   terms: 'Thank you for doing business with us.',
   design: 'table',
   nextNumber: 1,
@@ -45,7 +46,7 @@ const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${pad2
 const isoToDmy = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? `${m[3]}-${m[2]}-${m[1]}` : (iso || ''); };
 const dmyToIso = s => { const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s || ''); return m ? `${m[3]}-${m[2]}-${m[1]}` : todayIso(); };
 const safeName = s => String(s || '').replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
-const bizOf = inv => (inv && inv.biz) || { name: settings.name, address: settings.address, phone: settings.phone, email: settings.email };
+const bizOf = inv => (inv && inv.biz) || { name: settings.name, address: settings.address, phone: settings.phone, email: settings.email, ntn: settings.ntn };
 
 async function loadAll() {
   settings = await getSettings(DEFAULTS);
@@ -203,7 +204,7 @@ async function editScreen(id, copyId) {
   const prefill = params.get('customer') ? customers.find(c => c.id === params.get('customer')) : null;
   const d = src ? JSON.parse(JSON.stringify(src)) : {
     number: nextNumber(), date: isoToDmy(todayIso()),
-    customerName: prefill ? prefill.name : '', customerPhone: prefill ? prefill.phone : '', customerAddress: prefill ? prefill.address : '',
+    customerName: prefill ? prefill.name : '', customerPhone: prefill ? prefill.phone : '', customerAddress: prefill ? prefill.address : '', customerNtn: prefill ? prefill.ntn || '' : '',
     items: [{ name: '', qty: '1', rate: '' }], discount: '', received: '',
     terms: settings.terms, design: settings.design, signature: settings.signature || '', showSignature: !!settings.signature,
   };
@@ -226,8 +227,9 @@ async function editScreen(id, copyId) {
   // --- customer
   const dl = h('datalist', { id: 'custlist' }, customers.map(c => h('option', { value: c.name })));
   const nameIn = h('input', { value: d.customerName, list: 'custlist', placeholder: 'Customer name', autocomplete: 'off',
-    oninput: e => { d.customerName = e.target.value; const c = customers.find(x => x.name.toLowerCase() === e.target.value.trim().toLowerCase()); if (c) { if (!phoneIn.value) { phoneIn.value = c.phone || ''; d.customerPhone = phoneIn.value; } if (!addrIn.value) { addrIn.value = c.address || ''; d.customerAddress = addrIn.value; } } } });
+    oninput: e => { d.customerName = e.target.value; const c = customers.find(x => x.name.toLowerCase() === e.target.value.trim().toLowerCase()); if (c) { if (!phoneIn.value) { phoneIn.value = c.phone || ''; d.customerPhone = phoneIn.value; } if (!addrIn.value) { addrIn.value = c.address || ''; d.customerAddress = addrIn.value; } if (!ntnIn.value) { ntnIn.value = c.ntn || ''; d.customerNtn = ntnIn.value; } } } });
   const phoneIn = h('input', { value: d.customerPhone, type: 'tel', inputmode: 'tel', placeholder: 'Phone (optional)', oninput: e => (d.customerPhone = e.target.value) });
+  const ntnIn = h('input', { value: d.customerNtn || '', placeholder: 'NTN number (optional)', oninput: e => (d.customerNtn = e.target.value) });
   const addrIn = h('textarea', { placeholder: 'Address (optional)', oninput: e => (d.customerAddress = e.target.value) }, d.customerAddress || '');
 
   // --- items
@@ -283,7 +285,7 @@ async function editScreen(id, copyId) {
     dl,
     h('div', { class: 'sec' }, '1. Choose design'), designs,
     h('div', { class: 'sec' }, '2. Customer'),
-    h('div', { class: 'card' }, h('label', { class: 'f' }, 'Name'), nameIn, h('label', { class: 'f' }, 'Phone'), phoneIn, h('label', { class: 'f' }, 'Address'), addrIn),
+    h('div', { class: 'card' }, h('label', { class: 'f' }, 'Name'), nameIn, h('label', { class: 'f' }, 'Phone'), phoneIn, h('label', { class: 'f' }, 'Address'), addrIn, h('label', { class: 'f' }, 'Customer NTN number'), ntnIn),
     h('div', { class: 'sec' }, '3. Invoice details'),
     h('div', { class: 'card grid2' },
       h('div', {}, h('label', { class: 'f', style: 'margin-top:0' }, 'Invoice No. (auto)'), h('input', { value: d.number, readonly: true, 'aria-label': 'Invoice number (automatic)', style: 'background:#eef1f7;font-weight:700' })),
@@ -320,15 +322,15 @@ async function editScreen(id, copyId) {
     const now = Date.now();
     const inv = {
       id: existing ? existing.id : uid(), createdAt: existing ? existing.createdAt : now, updatedAt: now,
-      number: String(d.number).trim(), date: d.date, customerName: d.customerName.trim(), customerPhone: d.customerPhone.trim(), customerAddress: d.customerAddress.trim(),
+      number: String(d.number).trim(), date: d.date, customerName: d.customerName.trim(), customerPhone: d.customerPhone.trim(), customerAddress: d.customerAddress.trim(), customerNtn: (d.customerNtn || '').trim(),
       items: cleanItems, discount: num(d.discount), received: num(d.received), terms: d.terms, forName: d.forName.trim(), design: d.design,
       signature: d.signature, showSignature: !!d.signature && d.showSignature !== false,
-      biz: existing && existing.biz ? existing.biz : { name: settings.name, address: settings.address, phone: settings.phone, email: settings.email },
+      biz: existing && existing.biz ? existing.biz : { name: settings.name, address: settings.address, phone: settings.phone, email: settings.email, ntn: settings.ntn },
     };
     await db.put('invoices', inv);
     if (inv.customerName) {
       const cid = inv.customerName.toLowerCase();
-      await db.put('customers', { id: cid, name: inv.customerName, phone: inv.customerPhone, address: inv.customerAddress });
+      await db.put('customers', { id: cid, name: inv.customerName, phone: inv.customerPhone, address: inv.customerAddress, ntn: inv.customerNtn });
     }
     const n = parseInt(inv.number, 10);
     if (Number.isFinite(n) && n >= num(settings.nextNumber)) { settings.nextNumber = n + 1; }
@@ -381,7 +383,7 @@ function settingsScreen() {
 
   mount(topbar('Settings', { back: '#/' }), h('div', { class: 'screen' },
     h('div', { class: 'sec' }, 'Your business (printed on every invoice)'),
-    h('div', { class: 'card' }, field('Business name', 'name'), field('Address (one line per row)', 'address', 'text', 3), field('Phone', 'phone', 'tel'), field('Email', 'email', 'email')),
+    h('div', { class: 'card' }, field('Business name', 'name'), field('Address (one line per row)', 'address', 'text', 3), field('Phone', 'phone', 'tel'), field('Email', 'email', 'email'), field('Your NTN number', 'ntn')),
     h('div', { class: 'sec' }, 'Defaults'),
     h('div', { class: 'card' },
       field('Default terms', 'terms', 'text', 3),
