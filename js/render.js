@@ -287,6 +287,30 @@ function drawBody(ctx, inv, biz, sigImg, W) {
 
 // ---------- "Table Style" design (boxed grid table, orange accents) ----------
 const ORANGE = '#f2a02a', INK = '#1d1d1f', GRID = '#2b2b2e';
+
+// Faint emblem watermark: FT logo in the middle, ring of words around it
+function drawEmblemWatermark(ctx, mark, cx, cy) {
+  const Ro = 296, Ri = 232, rt = (Ro + Ri) / 2 - 8;
+  ctx.save();
+  ctx.globalAlpha = 0.15; ctx.strokeStyle = NAVY; ctx.fillStyle = NAVY;
+  ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, Ro, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, Ro - 9, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, Ri, 0, Math.PI * 2); ctx.stroke();
+  const str = 'SWIMMING POOL  \u2022  LED LIGHTS  \u2022  PLUMBING  \u2022  ELECTRICAL  \u2022  ';
+  setFont(ctx, 27, true);
+  const chars = [...str], ws = chars.map(c => ctx.measureText(c).width);
+  const total = ws.reduce((a, b) => a + b, 0), gap = (2 * Math.PI * rt - total) / chars.length;
+  let ang = -Math.PI / 2 - (ws[0] / 2) / rt;
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  chars.forEach((c, i) => {
+    const a = ang + (ws[i] / 2) / rt;
+    ctx.save(); ctx.translate(cx + rt * Math.cos(a), cy + rt * Math.sin(a)); ctx.rotate(a + Math.PI / 2); ctx.fillText(c, 0, 0); ctx.restore();
+    ang += (ws[i] + gap) / rt;
+  });
+  ctx.restore();
+  if (mark) { ctx.save(); ctx.globalAlpha = 0.12; drawContain(ctx, mark, cx - 214, cy - 214, 428, 428); ctx.restore(); }
+}
+
 function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   const t = totals({ ...inv, design: design.id });
   const subs = design.id === 'gst'
@@ -299,7 +323,7 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   g.addColorStop(0, '#fffdf8'); g.addColorStop(1, '#fff6e6');
   ctx.fillStyle = g; ctx.fillRect(0, 0, PW, PH);
   // big faint logo watermark in the centre, behind everything
-  if (mark) { ctx.save(); ctx.globalAlpha = 0.09; drawContain(ctx, mark, PW / 2 - 290, 570 - 290, 580, 580); ctx.restore(); }
+  drawEmblemWatermark(ctx, mark, PW / 2, 575);
   // header: logo left, INVOICE right
   drawContain(ctx, logo, X, 34, 230, 68);
   text(ctx, 'INVOICE', PW - X, 40, { size: 52, bold: true, color: INK, align: 'right' });
@@ -338,7 +362,7 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   ctx.fillStyle = ORANGE; ctx.fillRect(X, tt, W, headH);
   heads.forEach((hd, i) => text(ctx, hd, xs[i] + cols[i] / 2, tt + 7, { size: 14, bold: true, color: INK, align: 'center' }));
   // body background
-  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(X, tt + headH, W, rh * nRows);
+  ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(X, tt + headH, W, rh * nRows);
   for (let r = 0; r < nRows; r++) {
     const ry = tt + headH + r * rh, it = items[r];
     if (!it) continue;
@@ -351,7 +375,7 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   }
   // totals rows
   const fy = tt + headH + rh * nRows;
-  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(X, fy, W, footH + subsH);
+  ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(X, fy, W, footH + subsH);
   ctx.fillStyle = ORANGE; ctx.fillRect(xs[4], fy, cols[4], footH);
   text(ctx, t.discount > 0 ? 'Total (after discount ' + plain(t.discount) + ')' : 'Total', X + 10, fy + 7, { size: 15, bold: true, color: INK });
   text(ctx, plain(t.net), xs[4] + cols[4] - 8, fy + 7, { size: 15, bold: true, color: INK, align: 'right' });
@@ -367,7 +391,7 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   ctx.strokeStyle = GRID; ctx.lineWidth = 1.1;
   ctx.strokeRect(X, tt, W, tableH);
   for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(xs[i], tt); ctx.lineTo(xs[i], i === 4 || i === 3 ? tt + tableH : fy); ctx.stroke(); }
-  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(xs[3] + 1, fy + 1, cols[3] - 1, footH - 2); ctx.strokeStyle = GRID;
+  ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(xs[3] + 1, fy + 1, cols[3] - 1, footH - 2); ctx.strokeStyle = GRID;
   ctx.beginPath(); ctx.moveTo(X, fy); ctx.lineTo(PW - X, fy); ctx.stroke();
   for (let r = 0; r <= nRows; r++) { const ly = tt + headH + r * rh; ctx.beginPath(); ctx.moveTo(X, ly); ctx.lineTo(PW - X, ly); ctx.stroke(); }
   sy = fy + footH;
