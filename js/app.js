@@ -102,6 +102,25 @@ async function exportAs(inv, kind, share) {
 }
 
 // ---------- shell ----------
+// ---- Install app (PWA) ----
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; });
+window.addEventListener('appinstalled', () => { installEvt = null; document.querySelectorAll('.install-btn').forEach(b => b.remove()); toast('App installed'); });
+const isInstalled = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+async function installApp() {
+  if (installEvt) { installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; return; }
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const sheet = h('div', { class: 'sheet', onclick: e => { if (e.target === sheet) sheet.remove(); } },
+    h('div', { class: 'sheet-card' },
+      h('h2', { style: 'margin:0 0 8px' }, 'Install Fine Tec Invoices'),
+      h('p', { style: 'margin:0 0 12px;line-height:1.5' }, ios
+        ? 'Tap the Share button in Safari, then choose "Add to Home Screen".'
+        : 'Open the browser menu (three dots) and tap "Install app" or "Add to Home screen". If you do not see it, open this page in Chrome.'),
+      h('button', { class: 'btn primary block', onclick: () => sheet.remove() }, 'OK')));
+  document.body.append(sheet);
+}
+const installBtn = () => (isInstalled() ? '' : h('button', { class: 'install-btn', onclick: installApp }, '⬇ Install app'));
+
 function topbar(title, { back, right } = {}) {
   return h('div', { class: 'topbar' },
     back ? h('button', { class: 'icon-btn', 'aria-label': 'Back', onclick: () => (typeof back === 'string' ? (location.hash = back) : history.back()) }, '‹') : h('img', { class: 'logo', src: 'assets/ft.png', alt: '' }),
@@ -139,7 +158,7 @@ function homeScreen() {
   const chip = (id, label) => h('button', { class: 'chip' + (view.filter === id ? ' on' : ''), onclick: () => { view.filter = id; homeScreen.render(); } }, label);
 
   return [
-    topbar('Fine Tec Invoices', { right: h('span', {}, h('button', { class: 'icon-btn', title: 'Customers', onclick: () => (location.hash = '#/customers') }, '👥'), h('button', { class: 'icon-btn', title: 'Settings', onclick: () => (location.hash = '#/settings') }, '⚙')) }),
+    topbar('Fine Tec Invoices', { right: h('span', {}, installBtn(), h('button', { class: 'icon-btn', title: 'Customers', onclick: () => (location.hash = '#/customers') }, '👥'), h('button', { class: 'icon-btn', title: 'Settings', onclick: () => (location.hash = '#/settings') }, '⚙')) }),
     h('div', { class: 'screen' },
       search,
       h('div', { class: 'chips' }, chip('all', `All (${invoices.length})`), chip('unpaid', 'Unpaid'), chip('paid', 'Paid')),

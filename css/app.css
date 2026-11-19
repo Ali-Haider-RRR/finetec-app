@@ -93,3 +93,6 @@ textarea { resize: vertical; min-height: 64px; }
 .cust { display: flex; gap: 10px; align-items: center; }
 .cust b { color: var(--navy); }
 @media (min-width: 760px) { .designs .design { width: 132px; } }
+
+.install-btn { background: #fff; color: var(--navy, #1b3262); border: 0; border-radius: 999px; font-weight: 700; font-size: 13px; padding: 7px 12px; margin-right: 4px; cursor: pointer; }
+.install-btn:active { opacity: .8; }
