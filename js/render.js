@@ -311,7 +311,7 @@ function drawEmblemWatermark(ctx, mark, cx, cy) {
   if (mark) { ctx.save(); ctx.globalAlpha = 0.12; drawContain(ctx, mark, cx - 214, cy - 214, 428, 428); ctx.restore(); }
 }
 
-function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
+function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods) {
   const t = totals({ ...inv, design: design.id });
   const subs = design.id === 'gst'
     ? [{ l: 'GST (18%)', v: t.gst, h: 24 }, { l: 'Total with GST', v: t.total, h: 28, b: true, o: true }, { l: 'Balance', v: t.balance, h: 24, b: true }]
@@ -324,6 +324,10 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   ctx.fillStyle = g; ctx.fillRect(0, 0, PW, PH);
   // big faint logo watermark in the centre, behind everything
   drawEmblemWatermark(ctx, mark, PW / 2, 575);
+  // dim product rows: top (behind From / Bill To) and bottom (behind the footer)
+  ctx.save(); ctx.globalAlpha = 0.11;
+  (prods || []).forEach(p => drawContain(ctx, p.im, 44 + p.col * ((PW - 88 - 168) / 3), p.row === 0 ? 126 : 990, 168, 102));
+  ctx.restore();
   // header: logo left, INVOICE right
   drawContain(ctx, logo, X, 34, 230, 68);
   text(ctx, 'INVOICE', PW - X, 40, { size: 52, bold: true, color: INK, align: 'right' });
@@ -472,7 +476,7 @@ export async function renderInvoice(canvas, inv, biz, designId, scale = 2) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, PW, PH);
-  if (design.custom) { drawTableInvoice(ctx, inv, biz, logo, mark, sig, design); return canvas; }
+  if (design.custom) { drawTableInvoice(ctx, inv, biz, logo, mark, sig, design, await Promise.all(PRODUCTS.map(async p => ({ ...p, im: await loadImage(`assets/products/${p.file}.png`) })))); return canvas; }
   if (bg) ctx.drawImage(bg, 0, 0, PW, PH);
   if (design.panel) {
     // soft white panel behind the writing area so text stays easy to read over the photo
