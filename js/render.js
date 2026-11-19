@@ -378,12 +378,16 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg) {
   });
   const nx = 400;
   text(ctx, 'Note:', nx, by, { size: 22, bold: true, color: INK });
-  const notes = wrap(ctx, inv.terms, PW - X - nx, 13, false).slice(0, 2);
-  [0, 1].forEach(i => { hline(ctx, nx, PW - X, by + 56 + i * 26, INK, 1.2); if (notes[i]) text(ctx, notes[i], nx, by + 56 + i * 26 - 19, { size: 13, color: INK }); });
+  hline(ctx, nx, PW - X, by + 56, INK, 1.2);
+  text(ctx, fitText(ctx, String(inv.terms || '').replace(/\s+/g, ' ').trim(), PW - X - nx, 13, false), nx, by + 37, { size: 13, color: INK });
+  // For: (same heading style as Note:) + one line
+  text(ctx, 'For:', nx, by + 84, { size: 22, bold: true, color: INK });
+  const forName = String((inv.forName != null ? inv.forName : biz.name) || 'FINE TEC').toUpperCase();
+  text(ctx, fitText(ctx, forName, PW - X - nx - 66, 15, true), nx + 66, by + 90, { size: 15, bold: true, color: INK });
+  hline(ctx, nx, PW - X, by + 114, INK, 1.2);
   // signature
   const sx = nx + (PW - X - nx) / 2;
-  text(ctx, 'For: ' + String((inv.forName != null ? inv.forName : biz.name) || 'FINE TEC').toUpperCase(), sx, by + 100, { size: 13, align: 'center', color: INK });
-  if (sigImg) drawContain(ctx, sigImg, sx - 95, by + 120, 190, 62);
+  if (sigImg) drawContain(ctx, sigImg, sx - 95, by + 122, 190, 58);
   hline(ctx, sx - 95, sx + 95, by + 184, INK, 1.1);
   text(ctx, 'Authorized Signatory', sx, by + 190, { size: 13, color: INK, align: 'center' });
 
