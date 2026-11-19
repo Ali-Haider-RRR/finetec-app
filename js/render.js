@@ -298,6 +298,8 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   const g = ctx.createLinearGradient(0, 0, 0, PH);
   g.addColorStop(0, '#fffdf8'); g.addColorStop(1, '#fff6e6');
   ctx.fillStyle = g; ctx.fillRect(0, 0, PW, PH);
+  // big faint logo watermark in the centre, behind everything
+  if (mark) { ctx.save(); ctx.globalAlpha = 0.09; drawContain(ctx, mark, PW / 2 - 290, 570 - 290, 580, 580); ctx.restore(); }
   // header: logo left, INVOICE right
   drawContain(ctx, logo, X, 34, 230, 68);
   text(ctx, 'INVOICE', PW - X, 40, { size: 52, bold: true, color: INK, align: 'right' });
@@ -336,7 +338,7 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   ctx.fillStyle = ORANGE; ctx.fillRect(X, tt, W, headH);
   heads.forEach((hd, i) => text(ctx, hd, xs[i] + cols[i] / 2, tt + 7, { size: 14, bold: true, color: INK, align: 'center' }));
   // body background
-  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(X, tt + headH, W, rh * nRows);
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(X, tt + headH, W, rh * nRows);
   for (let r = 0; r < nRows; r++) {
     const ry = tt + headH + r * rh, it = items[r];
     if (!it) continue;
@@ -349,7 +351,7 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   }
   // totals rows
   const fy = tt + headH + rh * nRows;
-  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(X, fy, W, footH + subsH);
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(X, fy, W, footH + subsH);
   ctx.fillStyle = ORANGE; ctx.fillRect(xs[4], fy, cols[4], footH);
   text(ctx, t.discount > 0 ? 'Total (after discount ' + plain(t.discount) + ')' : 'Total', X + 10, fy + 7, { size: 15, bold: true, color: INK });
   text(ctx, plain(t.net), xs[4] + cols[4] - 8, fy + 7, { size: 15, bold: true, color: INK, align: 'right' });
@@ -365,7 +367,7 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   ctx.strokeStyle = GRID; ctx.lineWidth = 1.1;
   ctx.strokeRect(X, tt, W, tableH);
   for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(xs[i], tt); ctx.lineTo(xs[i], i === 4 || i === 3 ? tt + tableH : fy); ctx.stroke(); }
-  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(xs[3] + 1, fy + 1, cols[3] - 1, footH - 2); ctx.strokeStyle = GRID;
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(xs[3] + 1, fy + 1, cols[3] - 1, footH - 2); ctx.strokeStyle = GRID;
   ctx.beginPath(); ctx.moveTo(X, fy); ctx.lineTo(PW - X, fy); ctx.stroke();
   for (let r = 0; r <= nRows; r++) { const ly = tt + headH + r * rh; ctx.beginPath(); ctx.moveTo(X, ly); ctx.lineTo(PW - X, ly); ctx.stroke(); }
   sy = fy + footH;
