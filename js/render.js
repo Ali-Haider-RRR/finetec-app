@@ -305,8 +305,11 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg) {
   cust.slice(0, 6).forEach((ln, i) => text(ctx, ln, PW - X, y + i * 20, { size: 14, bold: i === 0, color: INK, align: 'right' }));
   const from = [biz.name, biz.phone, biz.email, ...wrap(ctx, biz.address, colW, 13, false), String(biz.ntn || '').trim() ? 'NTN: ' + String(biz.ntn).trim() : ''].filter(Boolean);
   from.slice(0, 7).forEach((ln, i) => text(ctx, ln, X, y + i * 19, { size: i === 0 ? 14 : 13, bold: i === 0, color: INK }));
-  text(ctx, 'Date : ' + (inv.date || ''), PW / 2, y + 2, { size: 14, color: INK, align: 'center' });
-  text(ctx, 'Invoice No : ' + (inv.number || ''), PW / 2, y + 26, { size: 14, color: INK, align: 'center' });
+  const mx = PW / 2 - 62;
+  text(ctx, 'Date :', mx, y + 2, { size: 14, bold: true, color: INK });
+  text(ctx, inv.date || '', mx + 86, y + 2, { size: 14, color: INK });
+  text(ctx, 'Invoice No :', mx, y + 26, { size: 14, bold: true, color: INK });
+  text(ctx, String(inv.number || ''), mx + 86, y + 26, { size: 14, color: INK });
 
   // Table
   const tt = 322;
