@@ -379,14 +379,31 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
   // bottom section
   const by = 850;
   text(ctx, 'THANK YOU!', X, by, { size: 24, bold: true, color: INK });
-  const info = [wrap(ctx, String(biz.address || '').replace(/\n/g, ' '), 270, 13, false)[0], biz.phone, biz.email];
-  const addrLines = wrap(ctx, String(biz.address || '').replace(/\n/g, ' '), 270, 13, false).slice(0, 2);
-  const contact = [...addrLines, biz.phone, biz.email].filter(Boolean);
-  let cy = by + 42;
-  contact.forEach(ln => {
-    ctx.fillStyle = ORANGE; ctx.beginPath(); ctx.arc(X + 6, cy + 8, 5, 0, Math.PI * 2); ctx.fill();
-    text(ctx, ln, X + 22, cy, { size: 13, color: INK });
-    cy += 26;
+  const addrLines = wrap(ctx, String(biz.address || '').replace(/\n/g, ' '), 320, 13, false).slice(0, 2);
+  const rows = [];
+  if (addrLines.length) rows.push({ icon: 'pin', lines: addrLines });
+  if (biz.phone) rows.push({ icon: 'phone', lines: [biz.phone] });
+  if (biz.email) rows.push({ icon: 'mail', lines: [biz.email] });
+  let cy = by + 44;
+  rows.forEach(row => {
+    const ix = X + 11, iy = cy + 8;
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ix, iy, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#fff';
+    if (row.icon === 'pin') {
+      ctx.beginPath(); ctx.arc(ix, iy - 2, 4.6, Math.PI, 0); ctx.lineTo(ix, iy + 6.5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ix, iy - 2, 1.7, 0, Math.PI * 2); ctx.fill();
+    } else if (row.icon === 'phone') {
+      ctx.lineWidth = 3.4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(ix - 4.3, iy - 4.3); ctx.quadraticCurveTo(ix - 3.6, iy + 3.6, ix + 4.3, iy + 4.3); ctx.stroke();
+      ctx.beginPath(); ctx.arc(ix - 4, iy - 4.3, 2.4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ix + 4.3, iy + 4, 2.4, 0, Math.PI * 2); ctx.fill();
+      ctx.lineCap = 'butt';
+    } else {
+      ctx.fillRect(ix - 6.5, iy - 4.5, 13, 9);
+      ctx.strokeStyle = INK; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(ix - 6.5, iy - 4.5); ctx.lineTo(ix, iy + 1); ctx.lineTo(ix + 6.5, iy - 4.5); ctx.stroke();
+    }
+    row.lines.forEach((ln, i) => text(ctx, ln, X + 32, cy + i * 19, { size: 13, color: INK }));
+    cy += 22 + row.lines.length * 19 - 19 + 14;
   });
   const nx = 400;
   text(ctx, 'Note:', nx, by, { size: 22, bold: true, color: INK });
