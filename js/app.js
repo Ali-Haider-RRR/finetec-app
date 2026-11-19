@@ -9,7 +9,7 @@ const DEFAULTS = {
   phone: '+92 3269915915',
   email: 'finetecoffical@gmail.com',
   terms: 'Thank you for doing business with us.',
-  design: 'classic',
+  design: 'table',
   nextNumber: 1,
   signature: '',
 };
@@ -208,7 +208,7 @@ async function editScreen(id, copyId) {
     terms: settings.terms, design: settings.design, signature: settings.signature || '', showSignature: !!settings.signature,
   };
   if (!existing) { if (copyId) { d.number = nextNumber(); d.date = isoToDmy(todayIso()); d.received = ''; delete d.id; } }
-  d.design = d.design || settings.design;
+  d.design = 'table';
   if (d.forName == null) d.forName = (existing && existing.biz && existing.biz.name) || settings.name || '';
   d.items = (d.items && d.items.length ? d.items : [{ name: '', qty: '1', rate: '' }]).map(i => ({ name: i.name || '', qty: String(i.qty ?? '1'), rate: String(i.rate ?? '') }));
 

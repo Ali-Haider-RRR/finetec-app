@@ -7,12 +7,7 @@ const NAVY = '#1b3262', RED = '#c01230', LINE = '#9aa3b8', GREY = '#5b6784';
 const FONT = '"FineTecSans", "Liberation Sans", Arial, Helvetica, sans-serif';
 
 export const DESIGNS = [
-  { id: 'classic', name: 'Classic', note: 'Plain white', bg: null, products: null, top: 172, limit: 1015 },
-  { id: 'light', name: 'Light Products', note: 'Faint product rows', bg: null, products: 'soft', top: 270, limit: 890 },
-  { id: 'pool-light', name: 'Pool Light', note: 'Very light pool photo', bg: 'assets/bg-pool-light.jpg', panel: 0.3, products: 'soft', top: 270, limit: 890 },
-  { id: 'pool-mid', name: 'Pool', note: 'Pool photo + products', bg: 'assets/bg-pool-mid.jpg', panel: 0.66, products: 'soft', top: 270, limit: 890 },
-  { id: 'bold', name: 'Bold Products', note: 'Clear product rows', bg: null, products: 'bold', top: 300, limit: 886 },
-  { id: 'table', name: 'Table Style', note: 'Boxed table, orange', bg: null, products: null, custom: true },
+  { id: 'table', name: 'Simple Invoice', note: 'Boxed table, orange', bg: null, products: null, custom: true },
 ];
 
 const PRODUCTS = [
