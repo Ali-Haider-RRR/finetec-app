@@ -8,6 +8,7 @@ const FONT = '"FineTecSans", "Liberation Sans", Arial, Helvetica, sans-serif';
 
 export const DESIGNS = [
   { id: 'table', name: 'Simple Invoice', note: 'Boxed table, orange', bg: null, products: null, custom: true },
+  { id: 'gst', name: 'GST Invoice', note: 'Same design + 18% GST', bg: null, products: null, custom: true },
 ];
 
 const PRODUCTS = [
@@ -58,12 +59,15 @@ export function plain(v) {
   const n = Math.round((Number(v) || 0) * 100) / 100;
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+export const GST_RATE = 0.18;
 export function totals(inv) {
   const sub = (inv.items || []).reduce((s, it) => s + num(it.qty || 1) * num(it.rate), 0);
   const discount = Math.min(num(inv.discount), sub);
-  const total = Math.round((sub - discount) * 100) / 100;
+  const net = Math.round((sub - discount) * 100) / 100;
+  const gst = inv.design === 'gst' ? Math.round(net * GST_RATE * 100) / 100 : 0;
+  const total = Math.round((net + gst) * 100) / 100;
   const received = Math.min(num(inv.received), total);
-  return { sub, discount, total, received, balance: Math.round((total - received) * 100) / 100 };
+  return { sub, discount, net, gst, total, received, balance: Math.round((total - received) * 100) / 100 };
 }
 
 // ---------- drawing helpers ----------
@@ -283,8 +287,12 @@ function drawBody(ctx, inv, biz, sigImg, W) {
 
 // ---------- "Table Style" design (boxed grid table, orange accents) ----------
 const ORANGE = '#f2a02a', INK = '#1d1d1f', GRID = '#2b2b2e';
-function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg) {
-  const t = totals(inv);
+function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design) {
+  const t = totals({ ...inv, design: design.id });
+  const subs = design.id === 'gst'
+    ? [{ l: 'GST (18%)', v: t.gst, h: 24 }, { l: 'Total with GST', v: t.total, h: 28, b: true, o: true }, { l: 'Balance', v: t.balance, h: 24, b: true }]
+    : [{ l: 'Balance', v: t.balance, h: 24, b: true }];
+  const subsH = subs.reduce((s, x) => s + x.h, 0);
   const X = 44, W = PW - 88;
   // soft warm paper tint
   const g = ctx.createLinearGradient(0, 0, 0, PH);
@@ -316,14 +324,14 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg) {
   const cols = [46, 318, 64, 118, W - 46 - 318 - 64 - 118];
   const heads = ['Item', 'Description', 'Qty', 'Unit Price', 'Amount'];
   const xs = [X]; cols.forEach(c => xs.push(xs[xs.length - 1] + c));
-  const headH = 28, footH = 30, subH = 24;
+  const headH = 28, footH = 30;
   const bottom = 790;
-  const rowsArea = bottom - tt - headH - footH - subH * 2;
+  const rowsArea = bottom - tt - headH - footH - subsH;
   const items = (inv.items || []).filter(i => String(i.name || '').trim() || num(i.rate) > 0);
   const nRows = Math.max(10, items.length);
   const rh = Math.min(rowsArea / nRows, 40);
   const fs = rh >= 30 ? 14 : Math.max(9, Math.floor(rh * 0.45));
-  const tableH = headH + rh * nRows + footH + subH * 2;
+  const tableH = headH + rh * nRows + footH + subsH;
   // header
   ctx.fillStyle = ORANGE; ctx.fillRect(X, tt, W, headH);
   heads.forEach((hd, i) => text(ctx, hd, xs[i] + cols[i] / 2, tt + 7, { size: 14, bold: true, color: INK, align: 'center' }));
@@ -341,14 +349,18 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg) {
   }
   // totals rows
   const fy = tt + headH + rh * nRows;
-  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(X, fy, W, footH + subH * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(X, fy, W, footH + subsH);
   ctx.fillStyle = ORANGE; ctx.fillRect(xs[4], fy, cols[4], footH);
   text(ctx, t.discount > 0 ? 'Total (after discount ' + plain(t.discount) + ')' : 'Total', X + 10, fy + 7, { size: 15, bold: true, color: INK });
-  text(ctx, plain(t.total), xs[4] + cols[4] - 8, fy + 7, { size: 15, bold: true, color: INK, align: 'right' });
-  text(ctx, 'Received', xs[3] + cols[3] - 8, fy + footH + 5, { size: 13, color: INK, align: 'right' });
-  text(ctx, plain(t.received), xs[4] + cols[4] - 8, fy + footH + 5, { size: 13, color: INK, align: 'right' });
-  text(ctx, 'Balance', xs[3] + cols[3] - 8, fy + footH + subH + 5, { size: 13, bold: true, color: INK, align: 'right' });
-  text(ctx, plain(t.balance), xs[4] + cols[4] - 8, fy + footH + subH + 5, { size: 13, bold: true, color: INK, align: 'right' });
+  text(ctx, plain(t.net), xs[4] + cols[4] - 8, fy + 7, { size: 15, bold: true, color: INK, align: 'right' });
+  let sy = fy + footH;
+  subs.forEach(x => {
+    if (x.o) { ctx.fillStyle = ORANGE; ctx.fillRect(xs[4], sy, cols[4], x.h); }
+    const ty = sy + (x.h - 13) / 2 - 1;
+    text(ctx, x.l, xs[3] + cols[3] - 8, ty, { size: 13, bold: !!x.b, color: INK, align: 'right' });
+    text(ctx, plain(x.v), xs[4] + cols[4] - 8, ty, { size: 13, bold: !!x.b, color: INK, align: 'right' });
+    sy += x.h;
+  });
   // grid lines
   ctx.strokeStyle = GRID; ctx.lineWidth = 1.1;
   ctx.strokeRect(X, tt, W, tableH);
@@ -356,8 +368,8 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg) {
   ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(xs[3] + 1, fy + 1, cols[3] - 1, footH - 2); ctx.strokeStyle = GRID;
   ctx.beginPath(); ctx.moveTo(X, fy); ctx.lineTo(PW - X, fy); ctx.stroke();
   for (let r = 0; r <= nRows; r++) { const ly = tt + headH + r * rh; ctx.beginPath(); ctx.moveTo(X, ly); ctx.lineTo(PW - X, ly); ctx.stroke(); }
-  ctx.beginPath(); ctx.moveTo(xs[3], fy + footH); ctx.lineTo(PW - X, fy + footH); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(xs[3], fy + footH + subH); ctx.lineTo(PW - X, fy + footH + subH); ctx.stroke();
+  sy = fy + footH;
+  subs.forEach(x => { ctx.beginPath(); ctx.moveTo(xs[3], sy); ctx.lineTo(PW - X, sy); ctx.stroke(); sy += x.h; });
 
   // amount in words
   const wy = tt + tableH + 12;
@@ -417,7 +429,7 @@ export async function renderInvoice(canvas, inv, biz, designId, scale = 2) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, PW, PH);
-  if (design.custom) { drawTableInvoice(ctx, inv, biz, logo, mark, sig); return canvas; }
+  if (design.custom) { drawTableInvoice(ctx, inv, biz, logo, mark, sig, design); return canvas; }
   if (bg) ctx.drawImage(bg, 0, 0, PW, PH);
   if (design.panel) {
     // soft white panel behind the writing area so text stays easy to read over the photo

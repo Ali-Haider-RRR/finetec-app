@@ -209,7 +209,7 @@ async function editScreen(id, copyId) {
     terms: settings.terms, design: settings.design, signature: settings.signature || '', showSignature: !!settings.signature,
   };
   if (!existing) { if (copyId) { d.number = nextNumber(); d.date = isoToDmy(todayIso()); d.received = ''; delete d.id; } }
-  d.design = 'table';
+  d.design = d.design === 'gst' ? 'gst' : 'table';
   if (d.forName == null) d.forName = (existing && existing.biz && existing.biz.name) || settings.name || '';
   d.items = (d.items && d.items.length ? d.items : [{ name: '', qty: '1', rate: '' }]).map(i => ({ name: i.name || '', qty: String(i.qty ?? '1'), rate: String(i.rate ?? '') }));
 
@@ -218,7 +218,7 @@ async function editScreen(id, copyId) {
   const designCards = {};
   for (const ds of DESIGNS) {
     const cv = h('canvas', {});
-    const card = h('div', { class: 'design' + (d.design === ds.id ? ' on' : ''), onclick: () => { d.design = ds.id; Object.entries(designCards).forEach(([k, c]) => c.classList.toggle('on', k === ds.id)); } },
+    const card = h('div', { class: 'design' + (d.design === ds.id ? ' on' : ''), onclick: () => { d.design = ds.id; Object.entries(designCards).forEach(([k, c]) => c.classList.toggle('on', k === ds.id)); recompute(); } },
       cv, h('b', {}, ds.name), h('small', {}, ds.note));
     designCards[ds.id] = card; designs.append(card);
     renderInvoice(cv, SAMPLE, bizOf(null), ds.id, 0.3).catch(() => {});
@@ -241,7 +241,9 @@ async function editScreen(id, copyId) {
     sumBox.replaceChildren(
       h('div', { class: 'r' }, h('span', {}, 'Subtotal'), h('span', {}, money(t.sub))),
       t.discount > 0 ? h('div', { class: 'r' }, h('span', {}, 'Discount'), h('span', {}, '- ' + money(t.discount))) : '',
-      h('div', { class: 'r big' }, h('span', {}, 'Total'), h('span', {}, money(t.total))),
+      h('div', { class: 'r' + (d.design === 'gst' ? '' : ' big') }, h('span', {}, 'Total'), h('span', {}, money(t.net))),
+      d.design === 'gst' ? h('div', { class: 'r' }, h('span', {}, 'GST (18%)'), h('span', {}, money(t.gst))) : '',
+      d.design === 'gst' ? h('div', { class: 'r big' }, h('span', {}, 'Total with GST'), h('span', {}, money(t.total))) : '',
       h('div', { class: 'r' }, h('span', {}, 'Received'), h('span', {}, money(t.received))),
       h('div', { class: 'r' }, h('span', {}, 'Balance'), h('span', {}, money(t.balance))));
     document.getElementById('savetotal') && (document.getElementById('savetotal').textContent = money(t.total));
