@@ -286,7 +286,7 @@ function drawBody(ctx, inv, biz, sigImg, W) {
 
 
 // ---------- "Table Style" design (boxed grid table, orange accents) ----------
-const ORANGE = '#f2a02a', INK = '#1d1d1f', GRID = '#2b2b2e';
+const BLUE = '#1b3262', REDC = '#c01230', INK = '#1d1d1f', GRID = '#2b2b2e';
 
 // Faint emblem watermark: FT logo in the middle, ring of words around it
 function drawEmblemWatermark(ctx, mark, cx, cy) {
@@ -331,7 +331,8 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods) {
   // header: logo left, INVOICE right
   drawContain(ctx, logo, X, 34, 230, 68);
   text(ctx, 'INVOICE', PW - X, 40, { size: 52, bold: true, color: INK, align: 'right' });
-  hline(ctx, X, PW - X, 122, ORANGE, 3);
+  hline(ctx, X, PW - X - 170, 122, BLUE, 3);
+  hline(ctx, PW - X - 170, PW - X, 122, REDC, 3);
 
   // Bill To / meta / From
   const colW = 230;
@@ -363,8 +364,8 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods) {
   const fs = rh >= 30 ? 14 : Math.max(9, Math.floor(rh * 0.45));
   const tableH = headH + rh * nRows + footH + subsH;
   // header
-  ctx.fillStyle = ORANGE; ctx.fillRect(X, tt, W, headH);
-  heads.forEach((hd, i) => text(ctx, hd, xs[i] + cols[i] / 2, tt + 7, { size: 14, bold: true, color: INK, align: 'center' }));
+  ctx.fillStyle = BLUE; ctx.fillRect(X, tt, W, headH);
+  heads.forEach((hd, i) => text(ctx, hd, xs[i] + cols[i] / 2, tt + 7, { size: 14, bold: true, color: '#fff', align: 'center' }));
   // body background
   ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(X, tt + headH, W, rh * nRows);
   for (let r = 0; r < nRows; r++) {
@@ -380,15 +381,15 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods) {
   // totals rows
   const fy = tt + headH + rh * nRows;
   ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(X, fy, W, footH + subsH);
-  ctx.fillStyle = ORANGE; ctx.fillRect(xs[4], fy, cols[4], footH);
+  ctx.fillStyle = BLUE; ctx.fillRect(xs[4], fy, cols[4], footH);
   text(ctx, t.discount > 0 ? 'Total (after discount ' + plain(t.discount) + ')' : 'Total', X + 10, fy + 7, { size: 15, bold: true, color: INK });
-  text(ctx, plain(t.net), xs[4] + cols[4] - 8, fy + 7, { size: 15, bold: true, color: INK, align: 'right' });
+  text(ctx, plain(t.net), xs[4] + cols[4] - 8, fy + 7, { size: 15, bold: true, color: '#fff', align: 'right' });
   let sy = fy + footH;
   subs.forEach(x => {
-    if (x.o) { ctx.fillStyle = ORANGE; ctx.fillRect(xs[4], sy, cols[4], x.h); }
+    if (x.o) { ctx.fillStyle = BLUE; ctx.fillRect(xs[4], sy, cols[4], x.h); }
     const ty = sy + (x.h - 13) / 2 - 1;
     text(ctx, x.l, xs[3] + cols[3] - 8, ty, { size: 13, bold: !!x.b, color: INK, align: 'right' });
-    text(ctx, plain(x.v), xs[4] + cols[4] - 8, ty, { size: 13, bold: !!x.b, color: INK, align: 'right' });
+    text(ctx, plain(x.v), xs[4] + cols[4] - 8, ty, { size: 13, bold: !!x.b, color: x.o ? '#fff' : INK, align: 'right' });
     sy += x.h;
   });
   // grid lines
@@ -440,9 +441,9 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods) {
   hline(ctx, nx, PW - X, by + 56, INK, 1.2);
   text(ctx, fitText(ctx, String(inv.terms || '').replace(/\s+/g, ' ').trim(), PW - X - nx, 13, false), nx, by + 37, { size: 13, color: INK });
   // For: (same heading style as Note:) + one line
-  text(ctx, 'For:', nx, by + 84, { size: 22, bold: true, color: INK });
-  const forName = String((inv.forName != null ? inv.forName : biz.name) || 'FINE TEC').toUpperCase();
-  text(ctx, fitText(ctx, forName, PW - X - nx - 66, 15, true), nx + 66, by + 90, { size: 15, bold: true, color: INK });
+  text(ctx, 'Site:', nx, by + 84, { size: 22, bold: true, color: INK });
+  const forName = String(inv.site || '').trim().toUpperCase();
+  text(ctx, fitText(ctx, forName, PW - X - nx - 72, 15, true), nx + 72, by + 90, { size: 15, bold: true, color: INK });
   hline(ctx, nx, PW - X, by + 114, INK, 1.2);
   // signature
   const sx = nx + (PW - X - nx) / 2;
@@ -451,8 +452,8 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods) {
   text(ctx, 'Authorized Signatory', sx, by + 190, { size: 13, color: INK, align: 'center' });
 
   // bottom bar
-  ctx.fillStyle = ORANGE; ctx.fillRect(0, PH - 26, PW, 16);
-  ctx.fillStyle = INK; ctx.fillRect(0, PH - 10, PW, 10);
+  ctx.fillStyle = REDC; ctx.fillRect(0, PH - 26, PW, 16);
+  ctx.fillStyle = BLUE; ctx.fillRect(0, PH - 10, PW, 10);
 }
 
 // ---------- public API ----------
