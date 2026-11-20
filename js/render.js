@@ -418,11 +418,12 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods) {
   let cy = by + 44;
   rows.forEach(row => {
     const ix = X + 11, iy = cy + 8;
-    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ix, iy, 11, 0, Math.PI * 2); ctx.fill();
+    const ic = row.icon === 'pin' ? REDC : row.icon === 'phone' ? '#2a9d4f' : '#1f5fae';
+    ctx.fillStyle = ic; ctx.beginPath(); ctx.arc(ix, iy, 12, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.strokeStyle = '#fff';
     if (row.icon === 'pin') {
       ctx.beginPath(); ctx.arc(ix, iy - 2, 4.6, Math.PI, 0); ctx.lineTo(ix, iy + 6.5); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ix, iy - 2, 1.7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = ic; ctx.beginPath(); ctx.arc(ix, iy - 2, 1.7, 0, Math.PI * 2); ctx.fill();
     } else if (row.icon === 'phone') {
       ctx.lineWidth = 3.4; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(ix - 4.3, iy - 4.3); ctx.quadraticCurveTo(ix - 3.6, iy + 3.6, ix + 4.3, iy + 4.3); ctx.stroke();
@@ -431,7 +432,7 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods) {
       ctx.lineCap = 'butt';
     } else {
       ctx.fillRect(ix - 6.5, iy - 4.5, 13, 9);
-      ctx.strokeStyle = INK; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(ix - 6.5, iy - 4.5); ctx.lineTo(ix, iy + 1); ctx.lineTo(ix + 6.5, iy - 4.5); ctx.stroke();
+      ctx.strokeStyle = ic; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(ix - 6.5, iy - 4.5); ctx.lineTo(ix, iy + 1); ctx.lineTo(ix + 6.5, iy - 4.5); ctx.stroke();
     }
     row.lines.forEach((ln, i) => text(ctx, ln, X + 32, cy + i * 19, { size: 13, color: INK }));
     cy += 22 + row.lines.length * 19 - 19 + 14;
