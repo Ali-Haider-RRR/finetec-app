@@ -311,7 +311,7 @@ function drawEmblemWatermark(ctx, mark, cx, cy) {
   if (mark) { ctx.save(); ctx.globalAlpha = 0.12; drawContain(ctx, mark, cx - 214, cy - 214, 428, 428); ctx.restore(); }
 }
 
-function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods) {
+function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods, cicons) {
   const t = totals({ ...inv, design: design.id });
   const subs = design.id === 'gst'
     ? [{ l: 'GST (18%)', v: t.gst, h: 24 }, { l: 'Total with GST', v: t.total, h: 28, b: true, o: true }, { l: 'Balance', v: t.balance, h: 24, b: true }]
@@ -417,23 +417,7 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods) {
   if (biz.email) rows.push({ icon: 'mail', lines: [biz.email] });
   let cy = by + 44;
   rows.forEach(row => {
-    const ix = X + 11, iy = cy + 8;
-    const ic = row.icon === 'pin' ? REDC : row.icon === 'phone' ? '#2a9d4f' : '#1f5fae';
-    ctx.fillStyle = ic; ctx.beginPath(); ctx.arc(ix, iy, 12, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#fff';
-    if (row.icon === 'pin') {
-      ctx.beginPath(); ctx.arc(ix, iy - 2, 4.6, Math.PI, 0); ctx.lineTo(ix, iy + 6.5); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = ic; ctx.beginPath(); ctx.arc(ix, iy - 2, 1.7, 0, Math.PI * 2); ctx.fill();
-    } else if (row.icon === 'phone') {
-      ctx.lineWidth = 3.4; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(ix - 4.3, iy - 4.3); ctx.quadraticCurveTo(ix - 3.6, iy + 3.6, ix + 4.3, iy + 4.3); ctx.stroke();
-      ctx.beginPath(); ctx.arc(ix - 4, iy - 4.3, 2.4, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(ix + 4.3, iy + 4, 2.4, 0, Math.PI * 2); ctx.fill();
-      ctx.lineCap = 'butt';
-    } else {
-      ctx.fillRect(ix - 6.5, iy - 4.5, 13, 9);
-      ctx.strokeStyle = ic; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(ix - 6.5, iy - 4.5); ctx.lineTo(ix, iy + 1); ctx.lineTo(ix + 6.5, iy - 4.5); ctx.stroke();
-    }
+    if (cicons && cicons[row.icon]) drawContain(ctx, cicons[row.icon], X, cy - 4, 26, 26);
     row.lines.forEach((ln, i) => text(ctx, ln, X + 32, cy + i * 19, { size: 13, color: INK }));
     cy += 22 + row.lines.length * 19 - 19 + 14;
   });
@@ -478,7 +462,7 @@ export async function renderInvoice(canvas, inv, biz, designId, scale = 2) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, PW, PH);
-  if (design.custom) { drawTableInvoice(ctx, inv, biz, logo, mark, sig, design, await Promise.all(PRODUCTS.map(async p => ({ ...p, im: await loadImage(`assets/products/${p.file}.png`) })))); return canvas; }
+  if (design.custom) { drawTableInvoice(ctx, inv, biz, logo, mark, sig, design, await Promise.all(PRODUCTS.map(async p => ({ ...p, im: await loadImage(`assets/products/${p.file}.png`) }))), Object.fromEntries(await Promise.all(['pin', 'phone', 'mail'].map(async k => [k, await loadImage(`assets/contact-${k}.png`)])))); return canvas; }
   if (bg) ctx.drawImage(bg, 0, 0, PW, PH);
   if (design.panel) {
     // soft white panel behind the writing area so text stays easy to read over the photo
