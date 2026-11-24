@@ -1,5 +1,5 @@
 // Service worker: caches the whole app so it works with no internet.
-const CACHE = 'finetec-v21';
+const CACHE = 'finetec-v22';
 const FILES = [
   './', './index.html', './manifest.webmanifest',
   './css/app.css',
@@ -7,7 +7,7 @@ const FILES = [
   './assets/logo.png', './assets/ft.png',
   './assets/bg-pool-light.jpg', './assets/bg-pool-mid.jpg',
   './assets/fonts/LiberationSans-Regular.ttf', './assets/fonts/LiberationSans-Bold.ttf',
-  './assets/contact-pin.png', './assets/contact-phone.png', './assets/contact-mail.png', './assets/icons/icon-192.png', './assets/icons/icon-512.png',
+  './assets/contact-pin.png', './assets/contact-phone.png', './assets/contact-mail.png', './assets/stamp.png', './assets/icons/icon-192.png', './assets/icons/icon-512.png',
   './assets/products/sand-filter.png', './assets/products/pool-pump.png', './assets/products/skimmer.png',
   './assets/products/heater.png', './assets/products/ladder.png', './assets/products/maintenance-kit.png',
   './assets/products/drain-led.png', './assets/products/valve.png',

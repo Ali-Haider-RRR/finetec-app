@@ -432,6 +432,7 @@ function drawTableInvoice(ctx, inv, biz, logo, mark, sigImg, design, prods, cico
   hline(ctx, nx, PW - X, by + 114, INK, 1.2);
   // signature
   const sx = nx + (PW - X - nx) / 2;
+  if (cicons && cicons.stamp) drawContain(ctx, cicons.stamp, 386, by + 122, 88, 88);
   if (sigImg) drawContain(ctx, sigImg, sx - 95, by + 122, 190, 58);
   hline(ctx, sx - 95, sx + 95, by + 184, INK, 1.1);
   text(ctx, 'Authorized Signatory', sx, by + 190, { size: 13, color: INK, align: 'center' });
@@ -462,7 +463,7 @@ export async function renderInvoice(canvas, inv, biz, designId, scale = 2) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, PW, PH);
-  if (design.custom) { drawTableInvoice(ctx, inv, biz, logo, mark, sig, design, await Promise.all(PRODUCTS.map(async p => ({ ...p, im: await loadImage(`assets/products/${p.file}.png`) }))), Object.fromEntries(await Promise.all(['pin', 'phone', 'mail'].map(async k => [k, await loadImage(`assets/contact-${k}.png`)])))); return canvas; }
+  if (design.custom) { drawTableInvoice(ctx, inv, biz, logo, mark, sig, design, await Promise.all(PRODUCTS.map(async p => ({ ...p, im: await loadImage(`assets/products/${p.file}.png`) }))), Object.fromEntries(await Promise.all(['pin', 'phone', 'mail'].map(async k => [k, await loadImage(`assets/contact-${k}.png`)]).concat([loadImage('assets/stamp.png').then(i => ['stamp', i])])))); return canvas; }
   if (bg) ctx.drawImage(bg, 0, 0, PW, PH);
   if (design.panel) {
     // soft white panel behind the writing area so text stays easy to read over the photo
